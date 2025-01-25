@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Video Transcript Viewer</title>
+    <style>
+        .container {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+        }
+        
+        .video-container {
+            flex: 1;
+        }
+        
+        .transcript-container {
+            flex: 1;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+        }
+
+        .word {
+            display: inline;
+            padding: 2px;
+            margin: 1px;
+            cursor: pointer;
+        }
+
+        .word.active {
+            background-color: yellow;
+        }
+
+        .file-inputs {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="file-inputs">
+        <input type="file" id="videoInput" accept="video/*">
+        <input type="file" id="jsonInput" accept="application/json">
+    </div>
+
+    <div class="container">
+        <div class="video-container">
+            <video id="videoPlayer" controls width="100%"></video>
+        </div>
+        <div class="transcript-container" id="transcript"></div>
+    </div>
+
+    <script>
+        let transcriptData;
+        let activeWordElements = [];
+
+        document.getElementById('videoInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            const video = document.getElementById('videoPlayer');
+            video.src = URL.createObjectURL(file);
+        });
+
+        document.getElementById('jsonInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                transcriptData = JSON.parse(e.target.result);
+                displayTranscript();
+            };
+            
+            reader.readAsText(file);
+        });
+
+        function displayTranscript() {
+            const transcriptContainer = document.getElementById('transcript');
+            transcriptContainer.innerHTML = '';
+
+            transcriptData.segments.forEach(segment => {
+                segment.words.forEach(word => {
+                    const wordSpan = document.createElement('span');
+                    wordSpan.textContent = word.text + ' ';
+                    wordSpan.className = 'word';
+                    
+                    // Color based on confidence
+                    const hue = word.confidence * 120; // 0 = red, 120 = green
+                    wordSpan.style.color = `hsl(${hue}, 100%, 30%)`;
+                    
+                    wordSpan.dataset.start = word.start;
+                    wordSpan.dataset.end = word.end;
+                    
+                    wordSpan.addEventListener('click', () => {
+                        const video = document.getElementById('videoPlayer');
+                        video.currentTime = word.start;
+                    });
+                    
+                    transcriptContainer.appendChild(wordSpan);
+                });
+            });
+        }
+
+        document.getElementById('videoPlayer').addEventListener('timeupdate', (e) => {
+            const currentTime = e.target.currentTime;
+            
+            // Remove previous highlights
+            activeWordElements.forEach(el => el.classList.remove('active'));
+            activeWordElements = [];
+            
+            // Find and highlight current words
+            const words = document.getElementsByClassName('word');
+            for(let word of words) {
+                const start = parseFloat(word.dataset.start);
+                const end = parseFloat(word.dataset.end);
+                
+                if(currentTime >= start && currentTime <= end) {
+                    word.classList.add('active');
+                    activeWordElements.push(word);
+                    
+                    // Scroll word into view
+                    word.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        });
+    </script>
+</body>
+</html>
