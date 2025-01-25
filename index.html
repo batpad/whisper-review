@@ -21,6 +21,37 @@
             border: 1px solid #ccc;
         }
 
+        .transcripts-wrapper {
+            flex: 2;
+            display: flex;
+            gap: 20px;
+        }
+
+        .file-input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .file-input-group label {
+            min-width: 120px;
+            font-weight: bold;
+        }
+
+        #addJsonButton {
+            margin-left: 130px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        .transcript-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding: 5px;
+            background-color: #f0f0f0;
+        }
+
         .word {
             display: inline;
             padding: 2px;
@@ -39,19 +70,38 @@
 </head>
 <body>
     <div class="file-inputs">
-        <input type="file" id="videoInput" accept="video/*">
-        <input type="file" id="jsonInput" accept="application/json">
+        <div class="file-input-group">
+            <label for="videoInput">Video File:</label>
+            <input type="file" id="videoInput" accept="video/*">
+        </div>
+        <div class="file-input-group">
+            <label for="jsonInput1">Transcript 1:</label>
+            <input type="file" id="jsonInput1" accept="application/json">
+        </div>
+        <div class="file-input-group" id="json2Group" style="display: none;">
+            <label for="jsonInput2">Transcript 2:</label>
+            <input type="file" id="jsonInput2" accept="application/json">
+        </div>
+        <button id="addJsonButton">Add Second Transcript</button>
     </div>
 
     <div class="container">
         <div class="video-container">
             <video id="videoPlayer" controls width="100%"></video>
         </div>
-        <div class="transcript-container" id="transcript"></div>
+        <div class="transcripts-wrapper">
+            <div class="transcript-container" id="transcript1">
+                <div class="transcript-title">Transcript 1</div>
+            </div>
+            <div class="transcript-container" id="transcript2" style="display: none;">
+                <div class="transcript-title">Transcript 2</div>
+            </div>
+        </div>
     </div>
 
     <script>
-        let transcriptData;
+        let transcriptData1;
+        let transcriptData2;
         let activeWordElements = [];
 
         document.getElementById('videoInput').addEventListener('change', (e) => {
@@ -60,21 +110,42 @@
             video.src = URL.createObjectURL(file);
         });
 
-        document.getElementById('jsonInput').addEventListener('change', (e) => {
+        document.getElementById('jsonInput1').addEventListener('change', (e) => {
             const file = e.target.files[0];
             const reader = new FileReader();
             
             reader.onload = (e) => {
-                transcriptData = JSON.parse(e.target.result);
-                displayTranscript();
+                transcriptData1 = JSON.parse(e.target.result);
+                displayTranscript(transcriptData1, 'transcript1');
             };
             
             reader.readAsText(file);
         });
 
-        function displayTranscript() {
-            const transcriptContainer = document.getElementById('transcript');
+        document.getElementById('jsonInput2').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                transcriptData2 = JSON.parse(e.target.result);
+                displayTranscript(transcriptData2, 'transcript2');
+            };
+            
+            reader.readAsText(file);
+        });
+
+        document.getElementById('addJsonButton').addEventListener('click', () => {
+            document.getElementById('json2Group').style.display = 'flex';
+            document.getElementById('transcript2').style.display = 'block';
+            document.getElementById('addJsonButton').style.display = 'none';
+        });
+
+        function displayTranscript(transcriptData, containerId) {
+            const transcriptContainer = document.getElementById(containerId);
+            // Preserve the title div
+            const titleDiv = transcriptContainer.querySelector('.transcript-title');
             transcriptContainer.innerHTML = '';
+            transcriptContainer.appendChild(titleDiv);
 
             transcriptData.segments.forEach(segment => {
                 segment.words.forEach(word => {
@@ -82,8 +153,7 @@
                     wordSpan.textContent = word.text + ' ';
                     wordSpan.className = 'word';
                     
-                    // Color based on confidence
-                    const hue = word.confidence * 120; // 0 = red, 120 = green
+                    const hue = word.confidence * 120;
                     wordSpan.style.color = `hsl(${hue}, 100%, 30%)`;
                     
                     wordSpan.dataset.start = word.start;
@@ -106,20 +176,24 @@
             activeWordElements.forEach(el => el.classList.remove('active'));
             activeWordElements = [];
             
-            // Find and highlight current words
-            const words = document.getElementsByClassName('word');
-            for(let word of words) {
-                const start = parseFloat(word.dataset.start);
-                const end = parseFloat(word.dataset.end);
-                
-                if(currentTime >= start && currentTime <= end) {
-                    word.classList.add('active');
-                    activeWordElements.push(word);
-                    
-                    // Scroll word into view
-                    word.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Find and highlight current words in both transcripts
+            ['transcript1', 'transcript2'].forEach(containerId => {
+                const container = document.getElementById(containerId);
+                if (container.style.display !== 'none') {
+                    const words = container.getElementsByClassName('word');
+                    for(let word of words) {
+                        const start = parseFloat(word.dataset.start);
+                        const end = parseFloat(word.dataset.end);
+                        
+                        if(currentTime >= start && currentTime <= end) {
+                            word.classList.add('active');
+                            activeWordElements.push(word);
+                            
+                            word.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }
                 }
-            }
+            });
         });
     </script>
 </body>
