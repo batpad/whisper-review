@@ -19,6 +19,7 @@
             overflow-y: auto;
             padding: 20px;
             border: 1px solid #ccc;
+            position: relative;  /* For proper scroll handling */
         }
 
         .transcripts-wrapper {
@@ -65,6 +66,16 @@
 
         .file-inputs {
             margin-bottom: 20px;
+        }
+
+        .time-marker {
+            width: 100%;
+            border-top: 1px solid #ccc;
+            margin: 15px 0;
+            padding-top: 5px;
+            color: #666;
+            font-weight: bold;
+            font-size: 0.9em;
         }
     </style>
 </head>
@@ -149,8 +160,22 @@
             transcriptContainer.innerHTML = '';
             transcriptContainer.appendChild(titleDiv);
 
+            let currentTimeBlock = 0;  // Track which 2-minute block we're in
+            const BLOCK_DURATION = 120; // 2 minutes in seconds
+
             transcriptData.segments.forEach(segment => {
                 segment.words.forEach(word => {
+                    // Check if we need to add a time block separator
+                    const wordTimeBlock = Math.floor(word.start / BLOCK_DURATION);
+                    if (wordTimeBlock > currentTimeBlock) {
+                        // Add timestamp marker and line break
+                        const timeMarker = document.createElement('div');
+                        timeMarker.className = 'time-marker';
+                        timeMarker.textContent = formatTimestamp(wordTimeBlock * BLOCK_DURATION);
+                        transcriptContainer.appendChild(timeMarker);
+                        currentTimeBlock = wordTimeBlock;
+                    }
+
                     const wordSpan = document.createElement('span');
                     wordSpan.textContent = word.text + ' ';
                     wordSpan.className = 'word';
@@ -160,6 +185,7 @@
                     
                     wordSpan.dataset.start = word.start;
                     wordSpan.dataset.end = word.end;
+                    wordSpan.dataset.timeBlock = wordTimeBlock;
                     
                     wordSpan.addEventListener('click', () => {
                         const video = document.getElementById('videoPlayer');
@@ -169,6 +195,12 @@
                     transcriptContainer.appendChild(wordSpan);
                 });
             });
+        }
+
+        function formatTimestamp(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = Math.floor(seconds % 60);
+            return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
         }
 
         document.getElementById('videoPlayer').addEventListener('timeupdate', (e) => {
