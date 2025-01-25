@@ -164,7 +164,7 @@
             const BLOCK_DURATION = 120; // 2 minutes in seconds
 
             transcriptData.segments.forEach(segment => {
-                segment.words.forEach(word => {
+                segment.words?.forEach(word => {
                     // Check if we need to add a time block separator
                     const wordTimeBlock = Math.floor(word.start / BLOCK_DURATION);
                     if (wordTimeBlock > currentTimeBlock) {
