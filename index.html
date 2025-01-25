@@ -116,6 +116,7 @@
             
             reader.onload = (e) => {
                 transcriptData1 = JSON.parse(e.target.result);
+                document.querySelector('#transcript1 .transcript-title').textContent = file.name;
                 displayTranscript(transcriptData1, 'transcript1');
             };
             
@@ -128,6 +129,7 @@
             
             reader.onload = (e) => {
                 transcriptData2 = JSON.parse(e.target.result);
+                document.querySelector('#transcript2 .transcript-title').textContent = file.name;
                 displayTranscript(transcriptData2, 'transcript2');
             };
             
