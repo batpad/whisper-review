@@ -126,9 +126,21 @@
             const reader = new FileReader();
             
             reader.onload = (e) => {
-                transcriptData1 = JSON.parse(e.target.result);
-                document.querySelector('#transcript1 .transcript-title').textContent = file.name;
-                displayTranscript(transcriptData1, 'transcript1');
+                try {
+                    transcriptData1 = JSON.parse(e.target.result);
+                    
+                    // Validate expected structure
+                    if (!transcriptData1.segments) {
+                        throw new Error('Invalid transcript format: missing segments');
+                    }
+                    
+                    document.querySelector('#transcript1 .transcript-title').textContent = file.name;
+                    displayTranscript(transcriptData1, 'transcript1');
+                } catch (error) {
+                    alert('Error: Invalid JSON file. Please upload a valid transcript file.');
+                    // Reset the file input so user can try again
+                    document.getElementById('jsonInput1').value = '';
+                }
             };
             
             reader.readAsText(file);
@@ -139,9 +151,21 @@
             const reader = new FileReader();
             
             reader.onload = (e) => {
-                transcriptData2 = JSON.parse(e.target.result);
-                document.querySelector('#transcript2 .transcript-title').textContent = file.name;
-                displayTranscript(transcriptData2, 'transcript2');
+                try {
+                    transcriptData2 = JSON.parse(e.target.result);
+                    
+                    // Validate expected structure
+                    if (!transcriptData2.segments) {
+                        throw new Error('Invalid transcript format: missing segments');
+                    }
+                    
+                    document.querySelector('#transcript2 .transcript-title').textContent = file.name;
+                    displayTranscript(transcriptData2, 'transcript2');
+                } catch (error) {
+                    alert('Error: Invalid JSON file. Please upload a valid transcript file.');
+                    // Reset the file input so user can try again
+                    document.getElementById('jsonInput2').value = '';
+                }
             };
             
             reader.readAsText(file);
